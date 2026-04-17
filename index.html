@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.js"></script>
 <style>
 :root {
   --bg: #0a0a0a;
@@ -36,22 +37,47 @@ body {
   color: var(--text);
   font-family: var(--font);
   display: flex;
+  flex-direction: column;
   height: 100vh;
 }
 
-/* ─── LEFT SIDEBAR ─── */
+/* ─── SIDEBAR (Bottom Sheet) ─── */
 .sidebar {
-  width: 260px;
-  min-width: 260px;
-  height: 100vh;
+  position: fixed;
+  top: auto;
+  bottom: -100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 420px;
+  max-height: 55vh;
+  z-index: 100;
   background: var(--sidebar);
-  border-right: 1px solid var(--border);
+  border-radius: 20px 20px 0 0;
+  border-top: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   padding: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  padding-top: 8px;
+  overflow: hidden;
+  transition: bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: none;
 }
+.sidebar::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: rgba(255,255,255,0.2);
+  border-radius: 4px;
+  margin: 4px auto 8px;
+  flex-shrink: 0;
+}
+.sidebar.open {
+  bottom: 0;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.6);
+}
+.sidebar-header { display: none; }
 
 .sidebar::-webkit-scrollbar { width: 3px; }
 .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
@@ -338,7 +364,7 @@ canvas, video { display: none; }
 
 /* ─── MOBILE TOP BAR ─── */
 .mobile-bar {
-  display: none;
+  display: flex;
   height: 52px;
   background: var(--sidebar);
   border-bottom: 1px solid var(--border);
@@ -394,83 +420,144 @@ canvas, video { display: none; }
   display: none;
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.6);
+  background: rgba(0,0,0,0.5);
   z-index: 90;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 .sidebar-overlay.show { display: block; }
 
-/* ─── MOBILE FLOATING BAR ─── */
-.mobile-fab {
-  display: none;
+/* ─── MOBILE BOTTOM BAR (Camera Style) ─── */
+.mobile-bottom {
+  display: flex;
   position: fixed;
-  bottom: 16px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--sidebar);
-  border: 1px solid var(--border);
-  border-radius: 100px;
-  padding: 6px;
-  gap: 6px;
+  bottom: 0; left: 0; right: 0;
+  height: 90px;
+  background: linear-gradient(to top, rgba(10,10,10,0.98), rgba(10,10,10,0.85));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--border);
   z-index: 80;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
   align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-.fab-btn {
-  padding: 10px 18px;
-  border: none;
+.bottom-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 400px;
+}
+
+/* ─── CAMERA MODE SELECTOR ─── */
+.camera-modes {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  background: rgba(10,10,10,0.6);
+  padding: 6px 16px;
   border-radius: 100px;
-  font-family: var(--mono);
-  font-size: 12px;
-  font-weight: 500;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.mode-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
   cursor: pointer;
+  transition: all var(--transition);
+}
+.mode-btn.active {
+  color: var(--accent);
+  text-shadow: 0 0 8px var(--accent-glow);
+}
+
+/* Side buttons */
+.bar-side-btn {
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+.bar-side-btn:hover { border-color: var(--border-hover); color: var(--text); }
+.bar-side-btn:active { transform: scale(0.92); }
+.bar-side-btn.active-toggle {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+/* Shutter / Capture Button */
+.shutter-btn {
+  width: 64px; height: 64px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
   transition: all var(--transition);
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  padding: 0;
 }
-.fab-start {
+.shutter-btn::after {
+  content: '';
+  width: 50px; height: 50px;
+  border-radius: 50%;
   background: var(--accent);
-  color: #000;
+  transition: all var(--transition);
 }
-.fab-start:active { transform: scale(0.95); }
-.fab-stop {
-  background: transparent;
-  color: var(--text-dim);
+.shutter-btn:active { transform: scale(0.92); }
+.shutter-btn:active::after { transform: scale(0.9); }
+
+/* When recording/live */
+.shutter-btn.recording {
+  border-color: var(--danger);
 }
-.fab-stop:hover { color: var(--danger); }
-
-/* ─── RESPONSIVE ─── */
-@media (max-width: 768px) {
-  body { flex-direction: column; }
-
-  .mobile-bar { display: flex; }
-  .mobile-fab { display: flex; }
-
-  .sidebar {
-    position: fixed;
-    top: 0; left: -280px;
-    width: 280px;
-    min-width: 280px;
-    z-index: 100;
-    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: none;
-  }
-  .sidebar.open {
-    left: 0;
-    box-shadow: 10px 0 40px rgba(0,0,0,0.5);
-  }
-
-  .main { height: calc(100vh - 52px); }
-
-  .output-wrap { padding: 8px; }
-
-  #toast { bottom: 80px; }
+.shutter-btn.recording::after {
+  width: 24px; height: 24px;
+  border-radius: 6px;
+  background: var(--danger);
 }
 
+/* ─── MAIN AREA ─── */
+.main { height: calc(100vh - 52px - 90px); }
+
+.hide-on-mobile { display: none !important; }
+
+/* \u2500\u2500\u2500 DESKTOP \u2500\u2500\u2500 */
+@media (min-width: 769px) {
+  .mobile-bar { display: none; }
+  .main { height: calc(100vh - 90px); }
+  #toast { bottom: 100px; }
+}
+
+/* ─── SMALL MOBILE ─── */
 @media (max-width: 400px) {
   .style-toggle { grid-template-columns: repeat(2, 1fr); }
-  .fab-btn { padding: 10px 14px; font-size: 11px; }
+  .mobile-bottom { height: 80px; }
+  .shutter-btn { width: 56px; height: 56px; }
+  .shutter-btn::after { width: 44px; height: 44px; }
+  .shutter-btn.recording::after { width: 20px; height: 20px; }
 }
 </style>
 </head>
@@ -501,7 +588,7 @@ canvas, video { display: none; }
   </div>
 
   <!-- Camera Controls -->
-  <div class="sidebar-section">
+  <div class="sidebar-section hide-on-mobile">
     <div class="section-title">Camera</div>
     <button class="btn btn-start" id="toggle-btn">
       <svg class="icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
@@ -543,15 +630,24 @@ canvas, video { display: none; }
         <button class="style-btn" data-mode="red">Red</button>
       </div>
     </div>
+
+    <div class="control-row hide-on-mobile">
+      <span class="control-label">Capture Mode</span>
+      <div class="style-toggle">
+        <button class="mode-btn active" data-cmode="pic">Picture</button>
+        <button class="mode-btn" data-cmode="vid">Video</button>
+        <button class="mode-btn" data-cmode="gif">GIF</button>
+      </div>
+    </div>
   </div>
 
   <!-- Export -->
-  <div class="sidebar-section">
-    <div class="section-title">Export</div>
+  <div class="sidebar-section hide-on-mobile">
+    <div class="section-title">Action</div>
     <div class="export-list">
-      <button class="export-btn" id="png-btn">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
-        Save as PNG
+      <button class="export-btn" id="main-capture-btn" style="background: var(--accent); color: #000; font-weight: 500; justify-content: center;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+        <span id="capture-btn-text">Capture Picture</span>
       </button>
       <button class="export-btn" id="txt-btn">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -581,13 +677,27 @@ canvas, video { display: none; }
   </div>
 </main>
 
-<!-- MOBILE FLOATING ACTION BAR -->
-<div class="mobile-fab" id="mobile-fab">
-  <button class="fab-btn fab-start" id="mob-toggle">
-    <svg class="icon-play" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-    <svg class="icon-stop" width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
-    <span class="btn-label">Start</span>
-  </button>
+<!-- MOBILE BOTTOM BAR (Camera Style) -->
+<div class="mobile-bottom" id="mobile-bottom">
+  <div class="camera-modes">
+    <button class="mode-btn active" data-cmode="pic">PICTURE</button>
+    <button class="mode-btn" data-cmode="vid">VIDEO</button>
+    <button class="mode-btn" data-cmode="gif">GIF</button>
+  </div>
+  <div class="bottom-bar-inner">
+    <!-- Toggle camera -->
+    <button class="bar-side-btn" id="mob-toggle" title="Start / Stop">
+      <svg class="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+      <svg class="icon-stop" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><line x1="1" y1="1" x2="23" y2="23"></line><path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34m-7.72-2.06a4 4 0 1 1-5.56-5.56"></path></svg>
+    </button>
+    <!-- Shutter / Capture -->
+    <button class="shutter-btn" id="mob-capture" title="Capture PNG">
+    </button>
+    <!-- Settings gear -->
+    <button class="bar-side-btn" id="mob-settings" title="Settings">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    </button>
+  </div>
 </div>
 
 <canvas id="canvas"></canvas>
@@ -603,6 +713,19 @@ const CHARSETS = {
 const COLORS = { green: '#00ff41', white: '#ffffff', amber: '#ffb300', red: '#ff3b3b' };
 
 let stream = null, animFrame = null, colorMode = 'green', charsetName = 'detailed', lastAsciiText = '';
+let currentCameraMode = 'pic';
+let isCapturing = false;
+let mediaRecorder = null;
+let recordedChunks = [];
+let gifEncoder = null;
+let lastGifFrameTime = 0;
+let gifWorkerURL = null;
+
+// Fetch GIF worker to bypass CORS issues on Web Workers
+fetch('https://cdnjs.cloudflare.com/ajax/libs/gif.js/0.2.0/gif.worker.js')
+  .then(res => res.blob())
+  .then(blob => { gifWorkerURL = URL.createObjectURL(blob); })
+  .catch(err => console.error('Failed to load GIF worker', err));
 
 const video    = document.getElementById('video');
 const canvas   = document.getElementById('canvas');
@@ -640,23 +763,25 @@ function toggleCamera() {
 toggleBtn.onclick = toggleCamera;
 charsetSelect.onchange = e => { charsetName = e.target.value; };
 
+const mobCapture = document.getElementById('mob-capture');
+
 function setButtonsLive(isLive) {
   [toggleBtn, mobToggle].forEach(btn => {
     const label = btn.querySelector('.btn-label');
     const playIcon = btn.querySelector('.icon-play');
     const stopIcon = btn.querySelector('.icon-stop');
     if (isLive) {
-      label.textContent = 'Stop';
+      if (label) label.textContent = 'Stop';
       playIcon.style.display = 'none';
       stopIcon.style.display = '';
       btn.classList.remove('btn-start', 'fab-start');
-      btn.classList.add('btn-stop', 'fab-stop');
+      btn.classList.add('btn-stop', 'active-toggle');
     } else {
-      label.textContent = 'Start';
+      if (label) label.textContent = 'Start';
       playIcon.style.display = '';
       stopIcon.style.display = 'none';
-      btn.classList.remove('btn-stop', 'fab-stop');
-      btn.classList.add('btn-start', 'fab-start');
+      btn.classList.remove('btn-stop', 'active-toggle');
+      btn.classList.add('btn-start');
     }
   });
 }
@@ -669,6 +794,44 @@ document.querySelectorAll('.style-btn').forEach(btn => {
     output.style.color = COLORS[colorMode];
   };
 });
+
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.onclick = () => {
+    // Stop recording if mode is switched
+    if (isCapturing) handleCapture(); 
+
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    currentCameraMode = btn.dataset.cmode;
+    document.querySelectorAll(`.mode-btn[data-cmode="${currentCameraMode}"]`).forEach(b => b.classList.add('active'));
+    
+    // Update main button text
+    const txt = document.getElementById('capture-btn-text');
+    if (txt) {
+      if (currentCameraMode === 'pic') txt.textContent = 'Capture Picture';
+      if (currentCameraMode === 'vid') txt.textContent = 'Record Video';
+      if (currentCameraMode === 'gif') txt.textContent = 'Record GIF';
+    }
+  };
+});
+
+function drawAsciiToCanvas() {
+  if (!lastAsciiText) return;
+  const lines = lastAsciiText.split('\n').filter(l => l.length > 0);
+  const cols  = lines[0] ? lines[0].length : 80;
+  const rows  = lines.length;
+  const charW = 7, charH = 11, pad = 14;
+
+  pngCanvas.width  = cols * charW + pad * 2;
+  pngCanvas.height = rows * charH + pad * 2;
+
+  const pc = pngCanvas.getContext('2d', { willReadFrequently: true });
+  pc.fillStyle = '#000000';
+  pc.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
+  pc.font = charH + 'px "Courier New", monospace';
+  pc.textBaseline = 'top';
+  pc.fillStyle = COLORS[colorMode] || '#00ff41';
+  lines.forEach((line, y) => pc.fillText(line, pad, pad + y * charH));
+}
 
 document.getElementById('txt-btn').onclick = function() {
   if (!lastAsciiText) { showToast('Start camera first', true); return; }
@@ -688,37 +851,6 @@ document.getElementById('clip-btn').onclick = function() {
     flashBtn(this);
     showToast('Copied to clipboard');
   }).catch(() => showToast('Clipboard access denied', true));
-};
-
-document.getElementById('png-btn').onclick = function() {
-  if (!lastAsciiText) { showToast('Start camera first', true); return; }
-
-  const lines = lastAsciiText.split('\n').filter(l => l.length > 0);
-  const cols  = lines[0] ? lines[0].length : 80;
-  const rows  = lines.length;
-  const charW = 7, charH = 11, pad = 14;
-
-  pngCanvas.width  = cols * charW + pad * 2;
-  pngCanvas.height = rows * charH + pad * 2;
-
-  const pc = pngCanvas.getContext('2d');
-  pc.fillStyle = '#000000';
-  pc.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
-  pc.font = charH + 'px "Courier New", monospace';
-  pc.textBaseline = 'top';
-
-  pc.fillStyle = COLORS[colorMode] || '#00ff41';
-  lines.forEach((line, y) => pc.fillText(line, pad, pad + y * charH));
-
-  pngCanvas.toBlob(blob => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'ascii-art-' + Date.now() + '.png';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  });
-  flashBtn(this);
-  showToast('PNG downloaded');
 };
 
 async function startCamera() {
@@ -801,6 +933,18 @@ function renderLoop() {
   output.style.color = COLORS[colorMode];
 
   lastAsciiText = asciiText;
+
+  if (isCapturing) {
+    drawAsciiToCanvas();
+    if (currentCameraMode === 'gif' && gifEncoder) {
+      const now = Date.now();
+      if (now - lastGifFrameTime >= 100) { // ~10 fps for GIF
+        gifEncoder.addFrame(pngCanvas, { copy: true, delay: 100 });
+        lastGifFrameTime = now;
+      }
+    }
+  }
+
   animFrame = requestAnimationFrame(renderLoop);
 }
 
@@ -823,8 +967,104 @@ menuToggle.addEventListener('click', () => {
 });
 overlay.addEventListener('click', closeSidebar);
 
-// ─── MOBILE FAB BUTTON ───
-mobToggle.onclick = () => { closeSidebar(); toggleCamera(); };
+// ─── MOBILE BOTTOM BAR ACTIONS ───
+// ─── CAMERA CAPTURE LOGIC ───
+
+function setRecordingUI(isRecording) {
+  isCapturing = isRecording;
+  const mainBtn = document.getElementById('main-capture-btn');
+  const mainTxt = document.getElementById('capture-btn-text');
+  
+  if (isRecording) {
+    mobCapture.classList.add('recording');
+    if (mainBtn) {
+       mainBtn.style.background = 'var(--danger)';
+       mainBtn.style.color = '#fff';
+       mainTxt.textContent = 'Stop Recording';
+    }
+  } else {
+    mobCapture.classList.remove('recording');
+    if (mainBtn) {
+       mainBtn.style.background = 'var(--accent)';
+       mainBtn.style.color = '#000';
+       if (currentCameraMode === 'pic') mainTxt.textContent = 'Capture Picture';
+       if (currentCameraMode === 'vid') mainTxt.textContent = 'Record Video';
+       if (currentCameraMode === 'gif') mainTxt.textContent = 'Record GIF';
+    }
+  }
+}
+
+function handleCapture() {
+  if (!stream) { showToast('Start camera first', true); return; }
+  
+  if (currentCameraMode === 'pic') {
+    mobCapture.style.transform = 'scale(0.85)';
+    setTimeout(() => mobCapture.style.transform = '', 150);
+    drawAsciiToCanvas();
+    pngCanvas.toBlob(blob => {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+      a.download = 'ascii-art-' + Date.now() + '.png'; a.click(); URL.revokeObjectURL(a.href);
+    });
+    flashBtn(document.getElementById('main-capture-btn'));
+    showToast('PNG downloaded');
+  } 
+  else if (currentCameraMode === 'vid') {
+    if (isCapturing) {
+      mediaRecorder.stop();
+      setRecordingUI(false);
+      showToast('Processing Video...');
+    } else {
+      const canvasStream = pngCanvas.captureStream(30);
+      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+      recordedChunks = [];
+      mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
+      mediaRecorder.onstop = () => {
+         const blob = new Blob(recordedChunks, { type: 'video/webm' });
+         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+         a.download = 'ascii-video-' + Date.now() + '.webm'; a.click(); URL.revokeObjectURL(a.href);
+         showToast('Video saved');
+      };
+      mediaRecorder.start();
+      setRecordingUI(true);
+      showToast('Recording Video...');
+    }
+  }
+  else if (currentCameraMode === 'gif') {
+    if (!gifWorkerURL) { showToast('GIF tools loading, please wait', true); return; }
+    if (isCapturing) {
+      setRecordingUI(false);
+      showToast('Rendering GIF... (Please hold)');
+      gifEncoder.render();
+    } else {
+      // Draw first frame to establish canvas dimensions
+      drawAsciiToCanvas();
+      gifEncoder = new GIF({
+        workers: 2,
+        quality: 10,
+        width: pngCanvas.width,
+        height: pngCanvas.height,
+        workerScript: gifWorkerURL
+      });
+      gifEncoder.on('finished', function(blob) {
+         const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+         a.download = 'ascii-anim-' + Date.now() + '.gif'; a.click(); URL.revokeObjectURL(a.href);
+         showToast('GIF saved');
+      });
+      gifEncoder.on('abort', function() { showToast('GIF cancelled', true); });
+      // Add first frame
+      gifEncoder.addFrame(pngCanvas, { copy: true, delay: 100 });
+      lastGifFrameTime = Date.now();
+      setRecordingUI(true);
+      showToast('Recording GIF...');
+    }
+  }
+}
+
+// ─── BOTTOM BAR & SIDEBAR ACTIONS ───
+mobToggle.onclick = () => { toggleCamera(); };
+mobCapture.onclick = handleCapture;
+document.getElementById('main-capture-btn').onclick = handleCapture;
+document.getElementById('mob-settings').onclick = openSidebar;
 
 </script>
 </body>
