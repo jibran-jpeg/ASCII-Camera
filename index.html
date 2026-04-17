@@ -961,8 +961,12 @@ function renderLoop() {
 
   canvas.width = cols; canvas.height = rows;
   ctx.save();
-  ctx.scale(-1, 1);
-  ctx.drawImage(video, -cols, 0, cols, rows);
+  if (currentFacingMode === 'user') {
+    ctx.scale(-1, 1);
+    ctx.drawImage(video, -cols, 0, cols, rows);
+  } else {
+    ctx.drawImage(video, 0, 0, cols, rows);
+  }
   ctx.restore();
 
   const imageData = ctx.getImageData(0, 0, cols, rows);
