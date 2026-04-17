@@ -821,7 +821,10 @@ function drawAsciiToCanvas() {
   const lines = lastAsciiLines;
   const cols  = lines[0] ? lines[0].length : 80;
   const rows  = lines.length;
-  const charW = 7, charH = 11, pad = 14;
+  
+  // Double the internal rendering resolution for sharp, high-quality exports
+  const SCALE = 2; 
+  const charW = 7 * SCALE, charH = 11 * SCALE, pad = 14 * SCALE;
 
   const tw = cols * charW + pad * 2;
   const th = rows * charH + pad * 2;
@@ -829,9 +832,10 @@ function drawAsciiToCanvas() {
   if (pngCanvas.height !== th) pngCanvas.height = th;
 
   const pc = pngCanvas.getContext('2d', { willReadFrequently: true });
+  pc.imageSmoothingEnabled = false;
   pc.fillStyle = '#000000';
   pc.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
-  pc.font = charH + 'px "Courier New", monospace';
+  pc.font = `bold ${charH}px "Courier New", monospace`;
   pc.textBaseline = 'top';
   pc.fillStyle = COLORS[colorMode] || '#00ff41';
   lines.forEach((line, y) => pc.fillText(line, pad, pad + y * charH));
@@ -1040,7 +1044,7 @@ function handleCapture() {
       showToast('Processing Video...');
     } else {
       const canvasStream = pngCanvas.captureStream(30);
-      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm' });
+      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm', videoBitsPerSecond: 8000000 });
       recordedChunks = [];
       mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
       mediaRecorder.onstop = () => {
@@ -1065,7 +1069,7 @@ function handleCapture() {
       drawAsciiToCanvas();
       gifEncoder = new GIF({
         workers: 2,
-        quality: 10,
+        quality: 5,
         width: pngCanvas.width,
         height: pngCanvas.height,
         workerScript: gifWorkerURL
