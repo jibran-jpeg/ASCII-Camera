@@ -854,6 +854,16 @@ document.getElementById('clip-btn').onclick = function() {
 };
 
 async function startCamera() {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    showToast('Camera blocked here! Open in Chrome or Safari.', true);
+    status.textContent = 'Browser Unsupported';
+    status.style.color = 'var(--danger)';
+    statusDot.className = 'status-dot error';
+    mobileStatusDot.className = 'mobile-status';
+    setButtonsLive(false);
+    return;
+  }
+
   try {
     status.textContent = 'Connecting...';
     status.style.color = '';
@@ -871,9 +881,16 @@ async function startCamera() {
       renderLoop();
     };
   } catch(e) {
-    if (e.name === 'NotAllowedError') status.textContent = 'Permission denied';
-    else if (e.name === 'NotFoundError') status.textContent = 'No camera found';
-    else status.textContent = 'Error';
+    if (e.name === 'NotAllowedError') {
+       status.textContent = 'Permission denied';
+       showToast('Camera blocked! Open in Chrome or Safari.', true);
+    } else if (e.name === 'NotFoundError') {
+       status.textContent = 'No camera found';
+       showToast('No camera found', true);
+    } else {
+       status.textContent = 'Error';
+       showToast('Camera error! Open in Chrome or Safari.', true);
+    }
     status.style.color = 'var(--danger)';
     statusDot.className = 'status-dot error';
     mobileStatusDot.className = 'mobile-status';
