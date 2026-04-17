@@ -712,7 +712,9 @@ const CHARSETS = {
 };
 const COLORS = { green: '#00ff41', white: '#ffffff', amber: '#ffb300', red: '#ff3b3b' };
 
-let stream = null, animFrame = null, colorMode = 'green', charsetName = 'detailed', lastAsciiText = '';
+let stream = null, animFrame = null, colorMode = 'green', charsetName = 'detailed';
+let lastAsciiText = '';
+let lastAsciiLines = [];
 let currentCameraMode = 'pic';
 let isCapturing = false;
 let mediaRecorder = null;
@@ -815,14 +817,16 @@ document.querySelectorAll('.mode-btn').forEach(btn => {
 });
 
 function drawAsciiToCanvas() {
-  if (!lastAsciiText) return;
-  const lines = lastAsciiText.split('\n').filter(l => l.length > 0);
+  if (lastAsciiLines.length === 0) return;
+  const lines = lastAsciiLines;
   const cols  = lines[0] ? lines[0].length : 80;
   const rows  = lines.length;
   const charW = 7, charH = 11, pad = 14;
 
-  pngCanvas.width  = cols * charW + pad * 2;
-  pngCanvas.height = rows * charH + pad * 2;
+  const tw = cols * charW + pad * 2;
+  const th = rows * charH + pad * 2;
+  if (pngCanvas.width !== tw) pngCanvas.width = tw;
+  if (pngCanvas.height !== th) pngCanvas.height = th;
 
   const pc = pngCanvas.getContext('2d', { willReadFrequently: true });
   pc.fillStyle = '#000000';
@@ -937,19 +941,23 @@ function renderLoop() {
   output.style.fontSize = calculatedFontSize + 'px';
 
   let asciiText = '';
+  let lines = [];
 
   for (let y = 0; y < rows; y++) {
+    let lineStr = '';
     for (let x = 0; x < cols; x++) {
       const i = (y * cols + x) * 4;
       const b = (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]) / 255;
-      asciiText += charset[Math.floor(b * len)];
+      lineStr += charset[Math.floor(b * len)];
     }
-    asciiText += '\n';
+    asciiText += lineStr + '\n';
+    lines.push(lineStr);
   }
   output.textContent = asciiText;
   output.style.color = COLORS[colorMode];
 
   lastAsciiText = asciiText;
+  lastAsciiLines = lines;
 
   if (isCapturing) {
     drawAsciiToCanvas();
