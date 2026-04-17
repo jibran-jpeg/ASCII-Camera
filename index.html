@@ -823,9 +823,15 @@ function drawAsciiToCanvas() {
   const cols  = lines[0] ? lines[0].length : 80;
   const rows  = lines.length;
   
-  // For pristine pictures use 2x scale (4K). For video/GIF use 1x to maintain 30 FPS and prevent CPU/Encoder lag
-  const SCALE = (currentCameraMode === 'pic') ? 2 : 1; 
-  const charW = 7 * SCALE, charH = 11 * SCALE, pad = 14 * SCALE;
+  // Guard against varying resolutions: Target minimum 1080p for Picture, 720p for Video
+  const targetWidth = (currentCameraMode === 'pic') ? 1920 : 1280;
+  let SCALE = targetWidth / (cols * 7);
+  if (SCALE < 1.2) SCALE = 1.2; // Prevent unreadable micro-fonts on Ultra
+  if (SCALE > 3.5) SCALE = 3.5; // Cap massive upscale on Low settings to save CPU
+
+  const charW = Math.round(7 * SCALE);
+  const charH = Math.round(11 * SCALE);
+  const pad = Math.round(14 * SCALE);
 
   const tw = cols * charW + pad * 2;
   const th = rows * charH + pad * 2;
