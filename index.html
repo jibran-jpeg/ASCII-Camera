@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASCII Art Camera</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --sidebar: #111111;
+  --surface: #181818;
+  --border: #222;
+  --border-hover: #333;
+  --text: #e0e0e0;
+  --text-dim: #666;
+  --text-muted: #444;
+  --accent: #00ff41;
+  --accent-dim: rgba(0,255,65,0.15);
+  --accent-glow: rgba(0,255,65,0.25);
+  --danger: #ff3b3b;
+  --radius: 8px;
+  --font: 'Inter', -apple-system, sans-serif;
+  --mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  display: flex;
+  height: 100vh;
+}
+
+/* ─── LEFT SIDEBAR ─── */
+.sidebar {
+  width: 260px;
+  min-width: 260px;
+  height: 100vh;
+  background: var(--sidebar);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.sidebar::-webkit-scrollbar { width: 3px; }
+.sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+/* Logo */
+.logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.logo h1 {
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 1.5px;
+}
+.logo p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 400;
+}
+
+/* Sidebar Sections */
+.sidebar-section {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+/* Buttons */
+.btn-group { display: flex; gap: 8px; }
+
+.btn {
+  width: 100%;
+  padding: 11px 0;
+  border: none;
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-start {
+  background: var(--accent);
+  color: #000;
+}
+.btn-start:hover {
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+.btn-start:active { transform: scale(0.97); }
+
+.btn-stop {
+  background: transparent;
+  border: 1px solid rgba(255, 59, 59, 0.4);
+  color: var(--danger);
+}
+.btn-stop:hover {
+  background: rgba(255, 59, 59, 0.1);
+  border-color: var(--danger);
+}
+
+.fab-stop {
+  background: transparent !important;
+  border: 1px solid rgba(255, 59, 59, 0.4) !important;
+  color: var(--danger) !important;
+}
+
+/* Control Row */
+.control-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.control-row:last-child { margin-bottom: 0; }
+
+.control-label {
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 500;
+}
+
+select {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 12px;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  appearance: auto;
+  outline: none;
+}
+select:hover { border-color: var(--border-hover); }
+select:focus { border-color: var(--accent); }
+
+/* Style Toggle Pills */
+.style-toggle {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  background: var(--bg);
+  border-radius: var(--radius);
+  padding: 3px;
+  border: 1px solid var(--border);
+}
+
+.style-btn {
+  padding: 7px 0;
+  border: none;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: var(--font);
+}
+.style-btn:hover { color: var(--text); }
+.style-btn.active {
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Export Buttons */
+.export-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.export-btn {
+  width: 100%;
+  padding: 9px 12px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-dim);
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-align: left;
+}
+.export-btn svg { opacity: 0.4; transition: opacity var(--transition); flex-shrink: 0; }
+.export-btn:hover {
+  background: var(--surface);
+  border-color: var(--border-hover);
+  color: var(--text);
+}
+.export-btn:hover svg { opacity: 0.8; }
+.export-btn:active { transform: scale(0.98); }
+.export-btn.success {
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+  background: var(--accent-dim);
+}
+.export-btn.success svg { opacity: 1; }
+
+/* Sidebar Footer / Status */
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+.status-dot.live {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+.status-dot.error { background: var(--danger); box-shadow: 0 0 8px var(--danger); }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+#status {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* ─── MAIN CONTENT ─── */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Output */
+.output-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+}
+
+#ascii-output {
+  color: var(--accent);
+  font-family: var(--mono);
+  line-height: 1;
+  letter-spacing: 0px;
+  white-space: pre;
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  user-select: text;
+  overflow: hidden;
+}
+
+/* Placeholder state */
+.placeholder-text {
+  font-family: var(--font);
+  font-size: 14px;
+  color: var(--text-muted);
+  font-weight: 300;
+  letter-spacing: 0.5px;
+}
+
+/* Toast */
+#toast {
+  display: none;
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  padding: 10px 20px;
+  border-radius: 100px;
+  z-index: 999;
+  font-family: var(--font);
+  box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+}
+
+canvas, video { display: none; }
+
+/* ─── MOBILE TOP BAR ─── */
+.mobile-bar {
+  display: none;
+  height: 52px;
+  background: var(--sidebar);
+  border-bottom: 1px solid var(--border);
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.mobile-bar h1 {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  letter-spacing: 1px;
+}
+
+.mobile-bar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mobile-status {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+.mobile-status.live {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.hamburger {
+  width: 36px; height: 36px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-dim);
+  transition: all var(--transition);
+  padding: 0;
+}
+.hamburger:hover { border-color: var(--border-hover); color: var(--text); }
+.hamburger svg { display: block; }
+
+/* Sidebar overlay */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 90;
+}
+.sidebar-overlay.show { display: block; }
+
+/* ─── MOBILE FLOATING BAR ─── */
+.mobile-fab {
+  display: none;
+  position: fixed;
+  bottom: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 100px;
+  padding: 6px;
+  gap: 6px;
+  z-index: 80;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  align-items: center;
+}
+
+.fab-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 100px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.fab-start {
+  background: var(--accent);
+  color: #000;
+}
+.fab-start:active { transform: scale(0.95); }
+.fab-stop {
+  background: transparent;
+  color: var(--text-dim);
+}
+.fab-stop:hover { color: var(--danger); }
+
+/* ─── RESPONSIVE ─── */
+@media (max-width: 768px) {
+  body { flex-direction: column; }
+
+  .mobile-bar { display: flex; }
+  .mobile-fab { display: flex; }
+
+  .sidebar {
+    position: fixed;
+    top: 0; left: -280px;
+    width: 280px;
+    min-width: 280px;
+    z-index: 100;
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: none;
+  }
+  .sidebar.open {
+    left: 0;
+    box-shadow: 10px 0 40px rgba(0,0,0,0.5);
+  }
+
+  .main { height: calc(100vh - 52px); }
+
+  .output-wrap { padding: 8px; }
+
+  #toast { bottom: 80px; }
+}
+
+@media (max-width: 400px) {
+  .style-toggle { grid-template-columns: repeat(2, 1fr); }
+  .fab-btn { padding: 10px 14px; font-size: 11px; }
+}
+</style>
+</head>
+<body>
+
+<div id="toast"></div>
+
+<!-- MOBILE TOP BAR -->
+<div class="mobile-bar">
+  <h1>ASCII CAM</h1>
+  <div class="mobile-bar-right">
+    <div class="mobile-status" id="mobile-status-dot"></div>
+    <button class="hamburger" id="menu-toggle">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- SIDEBAR OVERLAY -->
+<div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+<!-- LEFT SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="logo">
+    <h1>ASCII CAMERA</h1>
+    <p>Real-time character art</p>
+  </div>
+
+  <!-- Camera Controls -->
+  <div class="sidebar-section">
+    <div class="section-title">Camera</div>
+    <button class="btn btn-start" id="toggle-btn">
+      <svg class="icon-play" width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+      <svg class="icon-stop" width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+      <span class="btn-label">Start</span>
+    </button>
+  </div>
+
+  <!-- Settings -->
+  <div class="sidebar-section">
+    <div class="section-title">Settings</div>
+
+    <div class="control-row">
+      <span class="control-label">Resolution</span>
+      <select id="size-select">
+        <option value="80">Small — 80 cols</option>
+        <option value="120" selected>Medium — 120 cols</option>
+        <option value="160">Large — 160 cols</option>
+        <option value="200">XL — 200 cols</option>
+        <option value="260">Ultra — 260 cols</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <span class="control-label">Character Set</span>
+      <select id="charset-select">
+        <option value="detailed">Detailed</option>
+        <option value="simple">Simple</option>
+        <option value="blocks">Blocks</option>
+      </select>
+    </div>
+
+    <div class="control-row">
+      <span class="control-label">Color Theme</span>
+      <div class="style-toggle">
+        <button class="style-btn active" data-mode="green">Green</button>
+        <button class="style-btn" data-mode="white">White</button>
+        <button class="style-btn" data-mode="amber">Amber</button>
+        <button class="style-btn" data-mode="red">Red</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Export -->
+  <div class="sidebar-section">
+    <div class="section-title">Export</div>
+    <div class="export-list">
+      <button class="export-btn" id="png-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+        Save as PNG
+      </button>
+      <button class="export-btn" id="txt-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+        Save as TXT
+      </button>
+      <button class="export-btn" id="clip-btn">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        Copy to clipboard
+      </button>
+    </div>
+  </div>
+
+  <!-- Status Footer -->
+  <div class="sidebar-footer">
+    <div class="status-row">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status">Offline</span>
+    </div>
+  </div>
+
+</aside>
+
+<!-- MAIN ASCII OUTPUT -->
+<main class="main">
+  <div class="output-wrap">
+    <div id="ascii-output"><span class="placeholder-text">Press Start to begin</span></div>
+  </div>
+</main>
+
+<!-- MOBILE FLOATING ACTION BAR -->
+<div class="mobile-fab" id="mobile-fab">
+  <button class="fab-btn fab-start" id="mob-toggle">
+    <svg class="icon-play" width="10" height="10" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+    <svg class="icon-stop" width="9" height="9" viewBox="0 0 24 24" fill="currentColor" style="display:none"><rect x="3" y="3" width="18" height="18" rx="2"></rect></svg>
+    <span class="btn-label">Start</span>
+  </button>
+</div>
+
+<canvas id="canvas"></canvas>
+<canvas id="png-canvas"></canvas>
+<video id="video" autoplay playsinline></video>
+
+<script>
+const CHARSETS = {
+  detailed: ' .\'`^",:;Il!i><~+_-?][}{1)(|/tfjrxnuvczXYUJCLQ0OZmwqpdbkhao*#MW&8%B@$',
+  simple:   ' .:-=+*#%@',
+  blocks:   ' ░░▒▒▓▓██'
+};
+const COLORS = { green: '#00ff41', white: '#ffffff', amber: '#ffb300', red: '#ff3b3b' };
+
+let stream = null, animFrame = null, colorMode = 'green', charsetName = 'detailed', lastAsciiText = '';
+
+const video    = document.getElementById('video');
+const canvas   = document.getElementById('canvas');
+const pngCanvas= document.getElementById('png-canvas');
+const ctx      = canvas.getContext('2d', { willReadFrequently: true });
+const output   = document.getElementById('ascii-output');
+const status   = document.getElementById('status');
+const statusDot= document.getElementById('status-dot');
+const mobileStatusDot = document.getElementById('mobile-status-dot');
+const sizeSelect    = document.getElementById('size-select');
+const charsetSelect = document.getElementById('charset-select');
+const toast    = document.getElementById('toast');
+
+function showToast(msg, err) {
+  toast.textContent = msg;
+  toast.style.borderColor = err ? 'var(--danger)' : 'var(--accent)';
+  toast.style.color = err ? 'var(--danger)' : 'var(--accent)';
+  toast.style.display = 'block';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => toast.style.display = 'none', 2500);
+}
+
+function flashBtn(btn) {
+  btn.classList.add('success');
+  setTimeout(() => btn.classList.remove('success'), 1600);
+}
+
+const toggleBtn = document.getElementById('toggle-btn');
+const mobToggle = document.getElementById('mob-toggle');
+
+function toggleCamera() {
+  stream ? stopCamera() : startCamera();
+}
+
+toggleBtn.onclick = toggleCamera;
+charsetSelect.onchange = e => { charsetName = e.target.value; };
+
+function setButtonsLive(isLive) {
+  [toggleBtn, mobToggle].forEach(btn => {
+    const label = btn.querySelector('.btn-label');
+    const playIcon = btn.querySelector('.icon-play');
+    const stopIcon = btn.querySelector('.icon-stop');
+    if (isLive) {
+      label.textContent = 'Stop';
+      playIcon.style.display = 'none';
+      stopIcon.style.display = '';
+      btn.classList.remove('btn-start', 'fab-start');
+      btn.classList.add('btn-stop', 'fab-stop');
+    } else {
+      label.textContent = 'Start';
+      playIcon.style.display = '';
+      stopIcon.style.display = 'none';
+      btn.classList.remove('btn-stop', 'fab-stop');
+      btn.classList.add('btn-start', 'fab-start');
+    }
+  });
+}
+
+document.querySelectorAll('.style-btn').forEach(btn => {
+  btn.onclick = () => {
+    document.querySelectorAll('.style-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    colorMode = btn.dataset.mode;
+    output.style.color = COLORS[colorMode];
+  };
+});
+
+document.getElementById('txt-btn').onclick = function() {
+  if (!lastAsciiText) { showToast('Start camera first', true); return; }
+  const blob = new Blob([lastAsciiText], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'ascii-art-' + Date.now() + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  flashBtn(this);
+  showToast('TXT downloaded');
+};
+
+document.getElementById('clip-btn').onclick = function() {
+  if (!lastAsciiText) { showToast('Start camera first', true); return; }
+  navigator.clipboard.writeText(lastAsciiText).then(() => {
+    flashBtn(this);
+    showToast('Copied to clipboard');
+  }).catch(() => showToast('Clipboard access denied', true));
+};
+
+document.getElementById('png-btn').onclick = function() {
+  if (!lastAsciiText) { showToast('Start camera first', true); return; }
+
+  const lines = lastAsciiText.split('\n').filter(l => l.length > 0);
+  const cols  = lines[0] ? lines[0].length : 80;
+  const rows  = lines.length;
+  const charW = 7, charH = 11, pad = 14;
+
+  pngCanvas.width  = cols * charW + pad * 2;
+  pngCanvas.height = rows * charH + pad * 2;
+
+  const pc = pngCanvas.getContext('2d');
+  pc.fillStyle = '#000000';
+  pc.fillRect(0, 0, pngCanvas.width, pngCanvas.height);
+  pc.font = charH + 'px "Courier New", monospace';
+  pc.textBaseline = 'top';
+
+  pc.fillStyle = COLORS[colorMode] || '#00ff41';
+  lines.forEach((line, y) => pc.fillText(line, pad, pad + y * charH));
+
+  pngCanvas.toBlob(blob => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ascii-art-' + Date.now() + '.png';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  flashBtn(this);
+  showToast('PNG downloaded');
+};
+
+async function startCamera() {
+  try {
+    status.textContent = 'Connecting...';
+    status.style.color = '';
+    statusDot.className = 'status-dot';
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false
+    });
+    video.srcObject = stream;
+    video.onloadedmetadata = () => {
+      status.textContent = 'Live';
+      status.style.color = 'var(--accent)';
+      statusDot.className = 'status-dot live';
+      mobileStatusDot.className = 'mobile-status live';
+      setButtonsLive(true);
+      renderLoop();
+    };
+  } catch(e) {
+    if (e.name === 'NotAllowedError') status.textContent = 'Permission denied';
+    else if (e.name === 'NotFoundError') status.textContent = 'No camera found';
+    else status.textContent = 'Error';
+    status.style.color = 'var(--danger)';
+    statusDot.className = 'status-dot error';
+    mobileStatusDot.className = 'mobile-status';
+    setButtonsLive(false);
+  }
+}
+
+function stopCamera() {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  if (stream) stream.getTracks().forEach(t => t.stop());
+  stream = null;
+  output.innerHTML = '<span class="placeholder-text">Press Start to begin</span>';
+  status.textContent = 'Offline';
+  status.style.color = '';
+  statusDot.className = 'status-dot';
+  mobileStatusDot.className = 'mobile-status';
+  setButtonsLive(false);
+}
+
+function renderLoop() {
+  if (!stream) return;
+  const cols = parseInt(sizeSelect.value);
+  const aspect = video.videoWidth / video.videoHeight || 1.7;
+  const rows = Math.floor(cols / aspect * 0.55);
+
+  canvas.width = cols; canvas.height = rows;
+  ctx.save();
+  ctx.scale(-1, 1);
+  ctx.drawImage(video, -cols, 0, cols, rows);
+  ctx.restore();
+
+  const imageData = ctx.getImageData(0, 0, cols, rows);
+  const data = imageData.data;
+  const charset = CHARSETS[charsetName];
+  const len = charset.length - 1;
+
+  const pad = 32;
+  const availWidth = output.clientWidth - pad;
+  const availHeight = output.clientHeight - pad;
+  const fontWidthRatio = 0.6;
+  const fontSizeByWidth = availWidth / (cols * fontWidthRatio);
+  const fontSizeByHeight = availHeight / rows;
+  const calculatedFontSize = Math.min(fontSizeByWidth, fontSizeByHeight);
+  output.style.fontSize = calculatedFontSize + 'px';
+
+  let asciiText = '';
+
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      const i = (y * cols + x) * 4;
+      const b = (0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2]) / 255;
+      asciiText += charset[Math.floor(b * len)];
+    }
+    asciiText += '\n';
+  }
+  output.textContent = asciiText;
+  output.style.color = COLORS[colorMode];
+
+  lastAsciiText = asciiText;
+  animFrame = requestAnimationFrame(renderLoop);
+}
+
+// ─── MOBILE SIDEBAR TOGGLE ───
+const sidebar = document.querySelector('.sidebar');
+const overlay = document.getElementById('sidebar-overlay');
+const menuToggle = document.getElementById('menu-toggle');
+
+function openSidebar() {
+  sidebar.classList.add('open');
+  overlay.classList.add('show');
+}
+function closeSidebar() {
+  sidebar.classList.remove('open');
+  overlay.classList.remove('show');
+}
+
+menuToggle.addEventListener('click', () => {
+  sidebar.classList.contains('open') ? closeSidebar() : openSidebar();
+});
+overlay.addEventListener('click', closeSidebar);
+
+// ─── MOBILE FAB BUTTON ───
+mobToggle.onclick = () => { closeSidebar(); toggleCamera(); };
+
+</script>
+</body>
+</html>
