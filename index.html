@@ -823,11 +823,14 @@ function drawAsciiToCanvas() {
   const cols  = lines[0] ? lines[0].length : 80;
   const rows  = lines.length;
   
-  // Guard against varying resolutions: Target minimum 1080p for Picture, 720p for Video
-  const targetWidth = (currentCameraMode === 'pic') ? 1920 : 1280;
+  // Absolute Maximum Quality Guarantee: 4K for Pictures, 1080p for Video, 1080px for GIF
+  let targetWidth = 1920; 
+  if (currentCameraMode === 'pic') targetWidth = 3840; 
+  if (currentCameraMode === 'gif') targetWidth = 1080; 
+
   let SCALE = targetWidth / (cols * 7);
-  if (SCALE < 1.2) SCALE = 1.2; // Prevent unreadable micro-fonts on Ultra
-  if (SCALE > 3.5) SCALE = 3.5; // Cap massive upscale on Low settings to save CPU
+  if (SCALE < 1.0) SCALE = 1.0; // Ensure text never gets impossibly small
+  if (SCALE > 4.5) SCALE = 4.5; // Allow huge upscaling on low settings for crisp text
 
   const charW = Math.round(7 * SCALE);
   const charH = Math.round(11 * SCALE);
@@ -1057,7 +1060,13 @@ function handleCapture() {
       setTimeout(() => mediaRecorder.stop(), 500);
     } else {
       const canvasStream = pngCanvas.captureStream(30);
-      mediaRecorder = new MediaRecorder(canvasStream, { mimeType: 'video/webm', videoBitsPerSecond: 3000000 });
+      let options = { videoBitsPerSecond: 12000000 }; // 12 Mbps for near-lossless text
+      if (MediaRecorder.isTypeSupported('video/webm; codecs=vp9')) {
+          options.mimeType = 'video/webm; codecs=vp9'; // Superior text compression
+      } else if (MediaRecorder.isTypeSupported('video/webm')) {
+          options.mimeType = 'video/webm';
+      }
+      mediaRecorder = new MediaRecorder(canvasStream, options);
       recordedChunks = [];
       mediaRecorder.ondataavailable = e => { if(e.data.size > 0) recordedChunks.push(e.data); };
       mediaRecorder.onstop = () => {
