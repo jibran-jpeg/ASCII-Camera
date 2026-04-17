@@ -911,11 +911,34 @@ async function startCamera() {
     status.textContent = 'Connecting...';
     status.style.color = '';
     statusDot.className = 'status-dot';
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false
-    });
+    
+    let constraints = { video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false };
+    if (currentFacingMode === 'user') {
+      constraints.video.facingMode = 'user';
+    } else {
+      constraints.video.facingMode = { exact: 'environment' };
+    }
+
+    try {
+      stream = await navigator.mediaDevices.getUserMedia(constraints);
+    } catch(err) {
+      if (currentFacingMode === 'environment') {
+        // Fallback for devices that don't support exact constraints
+        constraints.video.facingMode = 'environment';
+        stream = await navigator.mediaDevices.getUserMedia(constraints);
+      } else {
+        throw err;
+      }
+    }
+
     video.srcObject = stream;
     video.onloadedmetadata = () => {
+      // Intelligently verify what camera the OS actually gave us
+      const track = stream.getVideoTracks()[0];
+      if (track.getSettings && track.getSettings().facingMode) {
+        currentFacingMode = track.getSettings().facingMode;
+      }
+
       status.textContent = 'Live';
       status.style.color = 'var(--accent)';
       statusDot.className = 'status-dot live';
