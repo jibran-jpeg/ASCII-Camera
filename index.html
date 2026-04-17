@@ -721,6 +721,7 @@ let mediaRecorder = null;
 let recordedChunks = [];
 let gifEncoder = null;
 let lastGifFrameTime = 0;
+let lastVideoFrameTime = 0;
 let gifWorkerURL = null;
 
 // Fetch GIF worker to bypass CORS issues on Web Workers
@@ -964,10 +965,15 @@ function renderLoop() {
   lastAsciiLines = lines;
 
   if (isCapturing) {
-    drawAsciiToCanvas();
-    if (currentCameraMode === 'gif' && gifEncoder) {
-      const now = Date.now();
+    const now = Date.now();
+    if (currentCameraMode === 'vid') {
+      if (now - lastVideoFrameTime >= 33) { // ~30 fps for Video
+        drawAsciiToCanvas();
+        lastVideoFrameTime = now;
+      }
+    } else if (currentCameraMode === 'gif' && gifEncoder) {
       if (now - lastGifFrameTime >= 100) { // ~10 fps for GIF
+        drawAsciiToCanvas();
         gifEncoder.addFrame(pngCanvas, { copy: true, delay: 100 });
         lastGifFrameTime = now;
       }
