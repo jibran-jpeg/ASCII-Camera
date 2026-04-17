@@ -504,6 +504,17 @@ canvas, video { display: none; }
   color: var(--accent);
   background: var(--accent-dim);
 }
+.bar-side-btn.flash-active {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.bar-right-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
 
 /* Shutter / Capture Button */
 .shutter-btn {
@@ -693,10 +704,22 @@ canvas, video { display: none; }
     <!-- Shutter / Capture -->
     <button class="shutter-btn" id="mob-capture" title="Capture PNG">
     </button>
-    <!-- Settings gear -->
-    <button class="bar-side-btn" id="mob-settings" title="Settings">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-    </button>
+    <!-- Right side: Flip + Flash + Settings -->
+    <div class="bar-right-group">
+      <!-- Flip Camera (Front/Back) -->
+      <button class="bar-side-btn" id="mob-flip" title="Switch Camera">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+      </button>
+      <!-- Flash Toggle -->
+      <button class="bar-side-btn" id="mob-flash" title="Toggle Flash">
+        <svg class="flash-off-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+        <svg class="flash-on-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:none"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      </button>
+      <!-- Settings gear -->
+      <button class="bar-side-btn" id="mob-settings" title="Settings">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </button>
+    </div>
   </div>
 </div>
 
@@ -715,6 +738,8 @@ const COLORS = { green: '#00ff41', white: '#ffffff', amber: '#ffb300', red: '#ff
 let stream = null, animFrame = null, colorMode = 'green', charsetName = 'detailed';
 let lastAsciiText = '';
 let lastAsciiLines = [];
+let currentFacingMode = 'user'; // 'user' = front, 'environment' = back 
+let flashEnabled = false;
 let currentCameraMode = 'pic';
 let isCapturing = false;
 let mediaRecorder = null;
@@ -887,7 +912,7 @@ async function startCamera() {
     status.style.color = '';
     statusDot.className = 'status-dot';
     stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false
+      video: { facingMode: currentFacingMode, width: { ideal: 640 }, height: { ideal: 480 } }, audio: false
     });
     video.srcObject = stream;
     video.onloadedmetadata = () => {
@@ -1116,6 +1141,54 @@ mobToggle.onclick = () => { toggleCamera(); };
 mobCapture.onclick = handleCapture;
 document.getElementById('main-capture-btn').onclick = handleCapture;
 document.getElementById('mob-settings').onclick = openSidebar;
+
+// ─── FLIP CAMERA (Front/Back) ───
+document.getElementById('mob-flip').onclick = async function() {
+  currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+  if (stream) {
+    stopCamera();
+    await startCamera();
+    showToast(currentFacingMode === 'user' ? 'Front Camera' : 'Back Camera');
+  } else {
+    showToast(currentFacingMode === 'user' ? 'Front Camera selected' : 'Back Camera selected');
+  }
+};
+
+// ─── FLASH / TORCH TOGGLE ───
+document.getElementById('mob-flash').onclick = async function() {
+  const flashBtn = this;
+  const offIcon = flashBtn.querySelector('.flash-off-icon');
+  const onIcon = flashBtn.querySelector('.flash-on-icon');
+
+  if (!stream) { showToast('Start camera first', true); return; }
+
+  const track = stream.getVideoTracks()[0];
+  const capabilities = track.getCapabilities ? track.getCapabilities() : {};
+
+  if (!capabilities.torch) {
+    showToast('Flash not available on this device', true);
+    return;
+  }
+
+  flashEnabled = !flashEnabled;
+  try {
+    await track.applyConstraints({ advanced: [{ torch: flashEnabled }] });
+    if (flashEnabled) {
+      offIcon.style.display = 'none';
+      onIcon.style.display = '';
+      flashBtn.classList.add('flash-active');
+      showToast('Flash ON');
+    } else {
+      offIcon.style.display = '';
+      onIcon.style.display = 'none';
+      flashBtn.classList.remove('flash-active');
+      showToast('Flash OFF');
+    }
+  } catch(e) {
+    showToast('Flash failed', true);
+    flashEnabled = false;
+  }
+};
 
 </script>
 </body>
